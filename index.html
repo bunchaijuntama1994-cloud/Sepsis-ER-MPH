@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEPSIS FAST TRACK - FINAL CORRECTED</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a8a; --accent: #ef4444; --success: #10b981;
+            --warning: #f59e0b; --info: #3b82f6; --bg: #f1f5f9; --dark: #0f172a;
+        }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #1e293b; }
+        .app-container { max-width: 900px; margin: auto; }
+        .header { background: linear-gradient(135deg, var(--primary), #2563eb); color: white; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 1.6rem; }
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid #cbd5e1; }
+        .card-triage { border-left-color: var(--info); }
+        .card-vs { border-left-color: var(--warning); }
+        .card-treatment { border-left-color: var(--accent); }
+        .card-drug { border-left-color: #8b5cf6; } 
+        .card-monitoring { border-left-color: var(--success); }
+        h2 { font-size: 1.1rem; margin-top: 0; margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+        .row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f8fafc; flex-wrap: wrap; gap: 10px; }
+        .label { font-weight: 700; flex: 1; min-width: 220px; font-size: 0.95rem; }
+        .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        input, select { padding: 8px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; font-size: 0.9rem; }
+        .btn-now { background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.75rem; transition: 0.2s; }
+        .time-tag { background: #dbeafe; color: #1e40af; padding: 5px 10px; border-radius: 6px; font-family: monospace; font-weight: bold; min-width: 55px; text-align: center; }
+        .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; text-align: center; }
+        .score-item { background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .score-val { font-size: 1.8rem; font-weight: 800; display: block; }
+        .danger { color: var(--accent); } .safe { color: var(--success); }
+        .summary-card { background: var(--dark); color: #f8fafc; border-radius: 15px; padding: 25px; margin-top: 30px; }
+        .summary-body { background: #020617; padding: 15px; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; color: #38bdf8; margin: 15px 0; border: 1px solid #1e293b; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn-action { padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; font-size: 1rem; }
+        @media print { .btn-now, .btn-group, .header { display: none !important; } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h1>Sepsis Fast Track Record</h1>
+        <p>Muangpan Hospital • Final Corrected System</p>
+    </div>
+
+    <!-- Arrival -->
+    <div class="card card-triage">
+        <h2>🏥 Arrival & Triage</h2>
+        <div class="row">
+            <span class="label">Visit ER (StartTime)</span>
+            <div class="controls"><span id="t-visit" class="time-tag">--:--</span><button class="btn-now" onclick="mark('visit')">NOW</button></div>
+        </div>
+        <div class="row">
+            <span class="label">Level of Triage</span>
+            <select id="lv-first" onchange="update()"><option>Level 1</option><option>Level 2</option><option>Level 3</option><option>Level 4</option><option>Level 5</option></select>
+        </div>
+        <div class="row">
+            <span class="label">Assess Time (ประเมินอาการ)</span>
+            <div class="controls"><span id="t-assess" class="time-tag">--:--</span><button class="btn-now" onclick="mark('assess')">NOW</button></div>
+        </div>
+    </div>
+
+    <!-- Vitals & Scores -->
+    <div class="card card-vs">
+        <h2>🌡️ Vital Signs & NEWS2</h2>
+        <div class="row">
+            <div class="controls">
+                T <input type="number" step="0.1" id="vs-t" style="width:50px" oninput="calc()">
+                PR <input type="number" id="vs-pr" style="width:50px" oninput="calc()">
+                RR <input type="number" id="vs-rr" style="width:50px" oninput="calc()">
+                BP <input type="text" id="vs-bp" style="width:80px" placeholder="120/80" oninput="calc()">
+                Sat <input type="number" id="vs-sat" style="width:50px" oninput="calc()">%
+            </div>
+        </div>
+        <div class="row">
+            <span class="label">Consciousness (AVPU)</span>
+            <select id="vs-avpu" onchange="calc()"><option value="A">Alert (A)</option><option value="VPU">V / P / U (Confusion)</option></select>
+        </div>
+        <div class="row">
+            <span class="label">O2 Supplement?</span>
+            <select id="vs-o2-score" onchange="calc()"><option value="0">Air (ไม่ใช้ O2)</option><option value="2">Oxygen (ใช้ O2)</option></select>
+        </div>
+        <div class="score-row">
+            <div class="score-item"><span class="score-label">SIRS SCORE</span><span id="res-sirs" class="score-val safe">0</span></div>
+            <div class="score-item"><span class="score-label">NEWS2 SCORE</span><span id="res-news" class="score-val safe">0</span></div>
+        </div>
+    </div>
+
+    <!-- 1-Hr Bundle -->
+    <div class="card card-treatment">
+        <h2>💉 1-Hr Bundle Treatment</h2>
+        <div class="row"><span class="label">Activated Sepsis Fast Track</span><div class="controls"><span id="t-active" class="time-tag">--:--</span><button class="btn-now" onclick="mark('active')">NOW</button></div></div>
+        <div class="row"><span class="label">เริ่มวินิจฉัย Sepsis (Time)</span><div class="controls"><span id="t-dx" class="time-tag">--:--</span><button class="btn-now" onclick="mark('dx')">NOW</button></div></div>
+        <div class="row"><span class="label">Alert RRT Sepsis</span><div class="controls"><select id="rrt-stat" onchange="update()"><option>ไม่ใช่</option><option>ใช่</option></select><span id="t-rrt" class="time-tag">--:--</span><button class="btn-now" onclick="mark('rrt')">NOW</button></div></div>
+        <div class="row"><span class="label">เริ่มให้สารน้ำ (IV Fluid)</span><div class="controls"><span id="t-fluid" class="time-tag">--:--</span><button class="btn-now" onclick="mark('fluid')">NOW</button></div></div>
+        <div class="row"><span class="label">เริ่มให้ยา ATB</span><div class="controls"><span id="t-atb" class="time-tag">--:--</span><button class="btn-now" onclick="mark('atb')">NOW</button></div></div>
+        <div class="row"><span class="label">เจาะ Blood Lactate #1</span><div class="controls"><span id="t-lac-draw" class="time-tag">--:--</span><button class="btn-now" onclick="mark('lac-draw')">NOW</button></div></div>
+        <div class="row">
+            <span class="label">Hemoculture Set 1 (Rt/Lt)</span>
+            <div class="controls"><select id="hc1-side"><option>Rt</option><option>Lt</option></select><span id="t-hc1" class="time-tag">--:--</span><button class="btn-now" onclick="mark('hc1')">NOW</button></div>
+        </div>
+        <div class="row">
+            <span class="label">Hemoculture Set 2 (Rt/Lt)</span>
+            <div class="controls"><select id="hc2-side"><option>Lt</option><option>Rt</option></select><span id="t-hc2" class="time-tag">--:--</span><button class="btn-now" onclick="mark('hc2')">NOW</button></div>
+        </div>
+        <div class="row"><span class="label">ผล Blood Lactate (mmol/L)</span><div class="controls"><input type="number" step="0.1" id="val-lac" style="width:70px"><span id="t-lac-res" class="time-tag">--:--</span><button class="btn-now" onclick="mark('lac-res')">NOW</button></div></div>
+    </div>
+
+    <!-- Vasopressor -->
+    <div class="card card-drug">
+        <h2>💊 Vasopressor Drug & Safety</h2>
+        <div class="row">
+            <span class="label">ได้รับ Vasopressor</span>
+            <div class="controls">
+                <select id="vaso-stat" onchange="update()"><option>ไม่ได้รับ</option><option>ได้รับ</option></select>
+                <span id="t-vaso" class="time-tag">--:--</span><button class="btn-now" onclick="mark('vaso')">NOW</button>
+            </div>
+        </div>
+        <div class="row">
+            <span class="label">Norepinephrine Admin</span>
+            <div class="controls">
+                <input type="number" id="ne-mg" placeholder="mg" style="width:50px"> mg + 5DW <input type="number" id="ne-ml" placeholder="ml" style="width:50px"> ml 
+                Conc: <select id="ne-conc"><option>(4:250)</option><option>(4:100)</option></select>
+                <span id="t-ne" class="time-tag">--:--</span><button class="btn-now" onclick="mark('ne')">NOW</button>
+            </div>
+        </div>
+        <div class="row">
+            <span class="label">Observe Phlebitis / Extravasation</span>
+            <div class="controls">
+                <select id="side-eff"><option>ไม่มี</option><option>มี</option></select>
+                <span id="t-side" class="time-tag">--:--</span><button class="btn-now" onclick="mark('side')">NOW</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitoring -->
+    <div class="card card-monitoring">
+        <h2>🔍 Monitoring & Others</h2>
+        <div class="row"><span class="label">Monitor EKG / V/S (Time)</span><div class="controls"><span id="t-monitor" class="time-tag">--:--</span><button class="btn-now" onclick="mark('monitor')">NOW</button></div></div>
+        <div class="row"><span class="label">EKG 12 Lead (ปกติ/ผิดปกติ)</span><div class="controls">
+            <select id="ekg-res"><option>ปกติ</option><option>ผิดปกติ</option></select>
+            <span id="t-ekg" class="time-tag">--:--</span><button class="btn-now" onclick="mark('ekg')">NOW</button>
+        </div></div>
+        <div class="row"><span class="label">DTX Stat (mg/dL)</span><div class="controls">
+            <input type="number" id="val-dtx" style="width:70px">
+            <span id="t-dtx" class="time-tag">--:--</span><button class="btn-now" onclick="mark('dtx')">NOW</button>
+        </div></div>
+        <div class="row"><span class="label">IVC Evaluation (CI / DI %)</span><div class="controls">
+            CI <input type="number" id="val-ci" placeholder="%" style="width:55px"> DI <input type="number" id="val-di" placeholder="%" style="width:55px">
+            <span id="t-ivc" class="time-tag">--:--</span><button class="btn-now" onclick="mark('ivc')">NOW</button>
+        </div></div>
+        <div class="row"><span class="label">O2 Type / ETT Support</span><div class="controls">
+            <select id="o2-type"><option>Cannula</option><option>Mask Bag</option><option>ETT</option></select>
+            <span id="t-o2" class="time-tag">--:--</span><button class="btn-now" onclick="mark('o2')">NOW</button>
+        </div></div>
+        <div class="row"><span class="label">ETT No/Att/Dep</span><div class="controls">
+            No <input type="text" id="ett-no" style="width:35px"> Att <input type="number" id="ett-att" style="width:35px"> Dep <input type="number" id="ett-dep" style="width:35px">
+            <span id="t-ett" class="time-tag">--:--</span><button class="btn-now" onclick="mark('ett')">NOW</button>
+        </div></div>
+        <div class="row"><span class="label">Foley / Urine Out (ml)</span><div class="controls">
+            No <input type="text" id="f-no" style="width:35px"> UO <input type="number" id="u-out" style="width:50px">
+            <span id="t-foley" class="time-tag">--:--</span><button class="btn-now" onclick="mark('foley')">NOW</button>
+        </div></div>
+    </div>
+
+    <!-- Disposition -->
+    <div class="card">
+        <h2>🏁 Disposition</h2>
+        <div class="row"><span class="label">Disposition To</span><div class="controls">
+            <select id="dis-to"><option>Admit Ward</option><option>Refer Out</option><option>D/C</option></select>
+            <span id="t-dis" class="time-tag">--:--</span><button class="btn-now" onclick="mark('dis')">NOW</button>
+        </div></div>
+        <div class="row"><span class="label">Refer Out To (LPH / KKH)</span><div class="controls">
+            <select id="ref-to"><option>LPH</option><option>KKH</option><option>Other</option></select>
+            <span id="t-ref" class="time-tag">--:--</span><button class="btn-now" onclick="mark('ref')">NOW</button>
+        </div></div>
+        <div class="row"><span class="label">Final DX / Source</span><div class="controls">
+            <select id="final-dx"><option>Sepsis</option><option>Severe Sepsis</option><option>Septic Shock</option></select>
+            <input type="text" id="cause" placeholder="Source" style="width:120px">
+        </div></div>
+        <div class="row"><span class="label">Record By</span><input type="text" id="recorder" style="flex:1"></div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-card">
+        <h3>📝 Clinical Summary</h3>
+        <div id="summary-text" class="summary-body">กรุณากรอกข้อมูล...</div>
+        <div class="btn-group">
+            <button class="btn-action" style="background:var(--success)" onclick="copyText()">📋 COPY TEXT</button>
+            <button class="btn-action" style="background:var(--primary)" onclick="window.print()">🖨️ PRINT PDF</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let startTime = null;
+
+    function mark(id) {
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        document.getElementById('t-' + id).innerText = timeStr;
+        if (id === 'visit') startTime = now;
+        update();
+    }
+
+    function calc() {
+        let sirs = 0;
+        const t = parseFloat(document.getElementById('vs-t').value);
+        const hr = parseInt(document.getElementById('vs-pr').value);
+        const rr = parseInt(document.getElementById('vs-rr').value);
+        const sat = parseInt(document.getElementById('vs-sat').value);
+        const o2Score = parseInt(document.getElementById('vs-o2-score').value);
+        const avpu = document.getElementById('vs-avpu').value;
+
+        if (t > 38 || t < 36) sirs++; if (hr > 90) sirs++; if (rr > 20) sirs++;
+        document.getElementById('res-sirs').innerText = sirs;
+        document.getElementById('res-sirs').className = 'score-val ' + (sirs >= 2 ? 'danger' : 'safe');
+
+        let news = o2Score;
+        if (rr >= 25 || rr <= 8) news += 3; else if (rr >= 21) news += 2;
+        if (hr >= 131 || hr <= 40) news += 3; else if (hr >= 111 || hr <= 50) news += 2;
+        if (sat <= 91) news += 3; else if (sat <= 93) news += 2; else if (sat <= 95) news += 1;
+        if (avpu !== 'A') news += 3;
+        document.getElementById('res-news').innerText = news;
+        document.getElementById('res-news').className = 'score-val ' + (news >= 5 ? 'danger' : (news >= 3 ? 'warning' : 'safe'));
+        update();
+    }
+
+    function update() {
+        let diffText = "N/A";
+        const tDis = document.getElementById('t-dis').innerText;
+        if (startTime && tDis !== "--:--") {
+            const [h, m] = tDis.split(':');
+            const end = new Date(); end.setHours(h); end.setMinutes(m);
+            const diffMins = Math.round((end - startTime) / 60000);
+            diffText = `${diffMins} min`;
+        }
+
+        let s = `--- SEPSIS FAST TRACK: MUANGPAN HOSPITAL ---\n`;
+        s += `[ARRIVAL] Visit:${document.getElementById('t-visit').innerText} | Triage:${document.getElementById('lv-first').value} | Assess:${document.getElementById('t-assess').innerText}\n`;
+        s += `[VITALS] T:${document.getElementById('vs-t').value} PR:${document.getElementById('vs-pr').value} RR:${document.getElementById('vs-rr').value} BP:${document.getElementById('vs-bp').value} SpO2:${document.getElementById('vs-sat').value}% (${document.getElementById('vs-o2-score').value == 0 ? 'RA':'O2'})\n`;
+        s += `[SCORES] SIRS: ${document.getElementById('res-sirs').innerText} | NEWS2: ${document.getElementById('res-news').innerText}\n\n`;
+        
+        s += `[1-HR BUNDLE]\n- Active:${document.getElementById('t-active').innerText} | DX:${document.getElementById('t-dx').innerText} | RRT:${document.getElementById('rrt-stat').value}(${document.getElementById('t-rrt').innerText})\n`;
+        s += `- IV Fluid:${document.getElementById('t-fluid').innerText} | ATB:${document.getElementById('t-atb').innerText}\n`;
+        s += `- Lactate Draw:${document.getElementById('t-lac-draw').innerText} | Result:${document.getElementById('val-lac').value} mmol/L @${document.getElementById('t-lac-res').innerText}\n`;
+        s += `- HC Set 1:${document.getElementById('hc1-side').value} @${document.getElementById('t-hc1').innerText} | HC Set 2:${document.getElementById('hc2-side').value} @${document.getElementById('t-hc2').innerText}\n\n`;
+        
+        s += `[DRUGS & SAFETY]\n- Vasopressor: ${document.getElementById('vaso-stat').value} (${document.getElementById('t-vaso').innerText})\n`;
+        s += `- Norepinephrine: ${document.getElementById('ne-mg').value}mg + 5DW ${document.getElementById('ne-ml').value}ml (Conc ${document.getElementById('ne-conc').value}) @${document.getElementById('t-ne').innerText}\n`;
+        s += `- Side Effect: ${document.getElementById('side-eff').value} @${document.getElementById('t-side').innerText}\n\n`;
+        
+        s += `[MONITORING]\n- EKG Monitor:${document.getElementById('t-monitor').innerText} | EKG 12 Lead:${document.getElementById('ekg-res').value} @${document.getElementById('t-ekg').innerText}\n`;
+        s += `- DTX:${document.getElementById('val-dtx').value} (${document.getElementById('t-dtx').innerText})\n`;
+        s += `- IVC Evaluation: CI ${document.getElementById('val-ci').value}%, DI ${document.getElementById('val-di').value}% @${document.getElementById('t-ivc').innerText}\n`;
+        s += `- O2:${document.getElementById('o2-type').value} @${document.getElementById('t-o2').innerText} | ETT No:${document.getElementById('ett-no').value}, Att:${document.getElementById('ett-att').value}, Dep:${document.getElementById('ett-dep').value} @${document.getElementById('t-ett').innerText}\n`;
+        s += `- Foley No:${document.getElementById('f-no').value} @${document.getElementById('t-foley').innerText} | Urine:${document.getElementById('u-out').value} ml\n\n`;
+        
+        s += `[DISPOSITION]\n- Status: ${document.getElementById('dis-to').value} @${document.getElementById('t-dis').innerText}\n`;
+        s += `- Refer To: ${document.getElementById('ref-to').value} @${document.getElementById('t-ref').innerText}\n`;
+        s += `- Final DX: ${document.getElementById('final-dx').value} (${document.getElementById('cause').value})\n`;
+        s += `- PERFORMANCE (Door to Dispo): ${diffText}\n`;
+        s += `- Recorder: ${document.getElementById('recorder').value}\n`;
+        s += `Record At: ${new Date().toLocaleString('th-TH')}`;
+
+        document.getElementById('summary-text').innerText = s;
+    }
+
+    function copyText() { navigator.clipboard.writeText(document.getElementById('summary-text').innerText); alert("คัดลอกสำเร็จ!"); }
+</script>
+</body>
+</html>
